@@ -33,7 +33,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION "1.3.1"
+#define PLUGIN_VERSION "1.3.2"
 
 public Plugin myinfo = 
 {
@@ -150,6 +150,7 @@ public void OnClientDisconnect_Post(int client)
 public Action Timer_CheckStatus(Handle timer)
 {
 	CheckStatus();
+	return Plugin_Continue;
 }
 
 public Action Command_Record(int client, int args)
