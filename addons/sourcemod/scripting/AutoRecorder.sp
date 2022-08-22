@@ -33,12 +33,12 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION "1.3.0"
+#define PLUGIN_VERSION "1.3.1"
 
 public Plugin myinfo = 
 {
 	name = "Auto Recorder",
-	author = "Stevo.TVR",
+	author = "Stevo.TVR, inGame, maxime1907",
 	description = "Automates SourceTV recording based on player count and time of day.",
 	version = PLUGIN_VERSION,
 	url = "http://www.theville.org"
@@ -53,8 +53,14 @@ ConVar g_hTimeStop = null;
 ConVar g_hFinishMap = null;
 ConVar g_hDemoPath = null;
 
+bool g_bRestartRecording = false;
 bool g_bIsRecording = false;
 bool g_bIsManual = false;
+
+int g_iRestartRecording;
+
+// Default: o=rx,g=rx,u=rwx | 755
+#define DIRECTORY_PERMISSIONS (FPERM_O_READ|FPERM_O_EXEC | FPERM_G_READ|FPERM_G_EXEC | FPERM_U_READ|FPERM_U_WRITE|FPERM_U_EXEC)
 
 public void OnPluginStart()
 {
@@ -66,12 +72,14 @@ public void OnPluginStart()
 	g_hTimeStart = CreateConVar("sm_autorecord_timestart", "-1", "Hour in the day to start recording (0-23, -1 disables)");
 	g_hTimeStop = CreateConVar("sm_autorecord_timestop", "-1", "Hour in the day to stop recording (0-23, -1 disables)");
 	g_hFinishMap = CreateConVar("sm_autorecord_finishmap", "1", "If 1, continue recording until the map ends", _, true, 0.0, true, 1.0);
-	g_hDemoPath = CreateConVar("sm_autorecord_path", ".", "Path to store recorded demos");
+	g_hDemoPath = CreateConVar("sm_autorecord_path", "demos", "Path to store recorded demos");
 
-	AutoExecConfig(true, "autorecorder");
+	AutoExecConfig(true);
 
-	RegAdminCmd("sm_record", Command_Record, ADMFLAG_KICK, "Starts a SourceTV demo");
-	RegAdminCmd("sm_stoprecord", Command_StopRecord, ADMFLAG_KICK, "Stops the current SourceTV demo");
+	RegAdminCmd("sm_record", Command_Record, ADMFLAG_ROOT, "Starts a SourceTV demo");
+	RegAdminCmd("sm_stoprecord", Command_StopRecord, ADMFLAG_ROOT, "Stops the current SourceTV demo");
+
+	HookEvent("round_start", OnRoundStart);
 
 	g_hTvEnabled = FindConVar("tv_enable");
 
@@ -109,12 +117,23 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char [] 
 	}
 }
 
+public void OnRoundStart(Event hEvent, const char[] sEvent, bool bDontBroadcast)
+{
+    if(g_bRestartRecording && g_iRestartRecording <= GetTime())
+    {
+        StopRecord();
+        CheckStatus();
+    }
+}
+
 public void OnMapEnd()
 {
 	if(g_bIsRecording)
 	{
 		StopRecord();
 		g_bIsManual = false;
+		g_bRestartRecording = false;
+		g_iRestartRecording = -1;
 	}
 }
 
@@ -235,6 +254,9 @@ void StartRecord()
 		g_bIsRecording = true;
 
 		LogMessage("Recording to auto-%s-%s.dem", sTime, sMap);
+
+		g_bRestartRecording = true;
+		g_iRestartRecording = GetTime() + 1800;
 	}
 }
 
@@ -244,6 +266,8 @@ void StopRecord()
 	{
 		ServerCommand("tv_stoprecord");
 		g_bIsRecording = false;
+		g_bRestartRecording = false;
+		g_iRestartRecording = -1;
 	}
 }
 
@@ -258,7 +282,7 @@ void InitDirectory(const char[] sDir)
 		Format(sPath, sizeof(sPath), "%s/%s", sPath, sPieces[i]);
 		if(!DirExists(sPath))
 		{
-			CreateDirectory(sPath, 509);
+			CreateDirectory(sPath, DIRECTORY_PERMISSIONS);
 		}
 	}
 }
