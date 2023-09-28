@@ -10,13 +10,6 @@ project:
       - source: /addons
         dest: /addons
 
-    - name: AutoRecorder
-      type: git
-      repo: https://github.com/Rushaway/sm-plugin-AutoRecorder
-      unpack:
-      - source: /addons/sourcemod/scripting/include
-        dest: /addons/sourcemod/scripting/include
-
   root: /
   output: /addons/sourcemod/plugins
   targets:

@@ -25,11 +25,13 @@
 *   [*] Fixed minimum player count setting being off by one
 *   [*] Fixed player counting code getting out of range
 *   [*] Updated source code to the new syntax
+* Sept 28, 2023 - v.1.4.0:
+*   [*] Add forwards and natives for API usage
+*   [*] Small code improvements
 * 
 */
 
 #include <sourcemod>
-#include <AutoRecorder>
 
 #pragma semicolon 1
 #pragma newdecls required
