@@ -28,11 +28,13 @@
 * Apr 15, 2022 - v.1.3.1:
 *   [*] Increased the length limit of the map name in the demo filename
 *   [*] Fixed workshop map demo filenames missing the .dem extension
+* Sept 28, 2023 - v.1.4.0:
+*   [*] Add forwards and natives for API usage
+*   [*] Small code improvements
 * 
 */
 
 #include <sourcemod>
-#include <AutoRecorder>
 
 #pragma semicolon 1
 #pragma newdecls required
