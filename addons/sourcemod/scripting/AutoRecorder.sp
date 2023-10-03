@@ -28,6 +28,9 @@
 * Apr 15, 2022 - v.1.3.1:
 *   [*] Increased the length limit of the map name in the demo filename
 *   [*] Fixed workshop map demo filenames missing the .dem extension
+* Sept 28, 2023 - v.1.4.0:
+*   [*] Add forwards and natives for API usage
+*   [*] Small code improvements
 * 
 */
 
@@ -39,11 +42,14 @@
 public Plugin myinfo = 
 {
 	name = "Auto Recorder",
-	author = "Stevo.TVR, inGame, maxime1907",
+	author = "Stevo.TVR, inGame, maxime1907, .Rushaway",
 	description = "Automates SourceTV recording based on player count and time of day.",
-	version = "1.3.2",
+	version = "1.4.0",
 	url = "http://www.theville.org"
 }
+
+Handle g_hFwd_OnStartRecord;
+Handle g_hFwd_OnStopRecord;
 
 ConVar g_hTvEnabled = null;
 ConVar g_hAutoRecord = null;
@@ -59,9 +65,35 @@ bool g_bIsRecording = false;
 bool g_bIsManual = false;
 
 int g_iRestartRecording;
+int g_iRecordingFromTick;
+int g_iRecordingDemoCount;
+int g_iTimestamp;
+
+char g_sPath[PLATFORM_MAX_PATH];
+char g_sDemoName[PLATFORM_MAX_PATH];
+char g_sFileName[PLATFORM_MAX_PATH * 2];
+char g_sTime[16];
+char g_sMap[48];
+
 
 // Default: o=rx,g=rx,u=rwx | 755
 #define DIRECTORY_PERMISSIONS (FPERM_O_READ|FPERM_O_EXEC | FPERM_G_READ|FPERM_G_EXEC | FPERM_U_READ|FPERM_U_WRITE|FPERM_U_EXEC)
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	CreateNative("AutoRecorder_IsDemoRecording", Native_IsDemoRecording);
+	CreateNative("AutoRecorder_GetDemoRecordCount", Native_GetDemoRecordCount);
+	CreateNative("AutoRecorder_GetDemoRecordingMap", Native_GetDemoRecordingMap);
+	CreateNative("AutoRecorder_GetDemoRecordingTick", Native_GetDemoRecordingTick);
+	CreateNative("AutoRecorder_GetDemoRecordingName", Native_GetDemoRecordingName);
+	CreateNative("AutoRecorder_GetDemoRecordingTime", Native_GetDemoRecordingTime);
+
+	g_hFwd_OnStartRecord = CreateGlobalForward("AutoRecorder_OnStartRecord", ET_Ignore, Param_String, Param_String, Param_String, Param_Cell, Param_String);
+	g_hFwd_OnStopRecord = CreateGlobalForward("AutoRecorder_OnStopRecord", ET_Ignore, Param_String, Param_String, Param_String, Param_Cell, Param_String);
+
+	RegPluginLibrary("AutoRecorder");
+	return APLRes_Success;
+}
 
 public void OnPluginStart()
 {
@@ -82,11 +114,10 @@ public void OnPluginStart()
 
 	g_hTvEnabled = FindConVar("tv_enable");
 
-	char sPath[PLATFORM_MAX_PATH];
-	g_hDemoPath.GetString(sPath, sizeof(sPath));
-	if(!DirExists(sPath))
+	g_hDemoPath.GetString(g_sPath, sizeof(g_sPath));
+	if(!DirExists(g_sPath))
 	{
-		InitDirectory(sPath);
+		InitDirectory(g_sPath);
 	}
 
 	g_hMinPlayersStart.AddChangeHook(OnConVarChanged);
@@ -97,6 +128,7 @@ public void OnPluginStart()
 
 	CreateTimer(300.0, Timer_CheckStatus, _, TIMER_REPEAT);
 
+	CleanUp();
 	StopRecord();
 	CheckStatus();
 }
@@ -118,11 +150,21 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char [] 
 
 public void OnRoundStart(Event hEvent, const char[] sEvent, bool bDontBroadcast)
 {
-    if(g_bRestartRecording && g_iRestartRecording <= GetTime())
-    {
-        StopRecord();
-        CheckStatus();
-    }
+	if(g_bRestartRecording && g_iRestartRecording <= GetTime())
+	{
+		StopRecord();
+		CheckStatus();
+	}
+}
+
+public void OnMapStart()
+{
+	g_iRecordingDemoCount = 0;
+	GetCurrentMap(g_sMap, sizeof(g_sMap));
+	// replace slashes in map path name with dashes, to prevent fail on workshop maps
+	ReplaceString(g_sMap, sizeof(g_sMap), "/", "-", false);
+	// replace periods in map path name with underscores, so workshop map demos still get a .dem extension
+	ReplaceString(g_sMap, sizeof(g_sMap), ".", "_", false);
 }
 
 public void OnMapEnd()
@@ -130,9 +172,7 @@ public void OnMapEnd()
 	if(g_bIsRecording)
 	{
 		StopRecord();
-		g_bIsManual = false;
-		g_bRestartRecording = false;
-		g_iRestartRecording = -1;
+		CleanUp();
 	}
 }
 
@@ -164,6 +204,7 @@ public Action Command_Record(int client, int args)
 	g_bIsManual = true;
 
 	ReplyToCommand(client, "[SM] SourceTV is now recording...");
+	LogAction(-1, -1, "\"%L\" manually started recording demo on SourceTV.", client);
 
 	return Plugin_Handled;
 }
@@ -185,6 +226,7 @@ public Action Command_StopRecord(int client, int args)
 	}
 
 	ReplyToCommand(client, "[SM] Stopped recording.");
+	LogAction(-1, -1, "\"%L\" manually stopped recording demo on SourceTV.", client);
 
 	return Plugin_Handled;
 }
@@ -235,56 +277,140 @@ int GetPlayerCount()
 	return iNumPlayers;
 }
 
+stock void GetPath(char[] buffer, int size)
+{
+	g_hDemoPath.GetString(buffer, size);
+}
+
 void StartRecord()
 {
 	if(g_hTvEnabled.BoolValue && !g_bIsRecording)
 	{
-		char sPath[PLATFORM_MAX_PATH];
-		char sTime[16];
-		char sMap[48];
+		GetPath(g_sPath, sizeof(g_sPath));
 
-		g_hDemoPath.GetString(sPath, sizeof(sPath));
-		FormatTime(sTime, sizeof(sTime), "%Y%m%d-%H%M%S", GetTime());
-		GetCurrentMap(sMap, sizeof(sMap));
+		g_iTimestamp = GetTime();
+		FormatTime(g_sTime, sizeof(g_sTime), "%Y%m%d-%H%M%S", g_iTimestamp);
+		Format(g_sDemoName, sizeof(g_sDemoName), "auto-%s-%s", g_sTime, g_sMap);
+		Format(g_sFileName, sizeof(g_sFileName), "%s.dem", g_sDemoName);
 
-		// replace slashes in map path name with dashes, to prevent fail on workshop maps
-		ReplaceString(sMap, sizeof(sMap), "/", "-", false);
-		// replace periods in map path name with underscores, so workshop map demos still get a .dem extension
-		ReplaceString(sMap, sizeof(sMap), ".", "_", false);
-
-		ServerCommand("tv_record \"%s/auto-%s-%s\"", sPath, sTime, sMap);
+		ServerCommand("tv_record \"%s/%s\"", g_sPath, g_sDemoName);
+		g_iRecordingFromTick = GetGameTickCount();
 		g_bIsRecording = true;
-
-		LogMessage("Recording to auto-%s-%s.dem", sTime, sMap);
-
 		g_bRestartRecording = true;
 		g_iRestartRecording = GetTime() + 1800;
+		g_iRecordingDemoCount++;
+
+		LogMessage("Recording to \"%s/%s\"", g_sPath, g_sFileName);
+
+		Call_StartForward(g_hFwd_OnStartRecord);
+		Call_PushString(g_sPath);
+		Call_PushString(g_sMap);
+		Call_PushString(g_sTime);
+		Call_PushCell(g_iRecordingDemoCount);
+		Call_PushString(g_sFileName);
+		Call_Finish();
 	}
 }
 
 void StopRecord()
 {
-	if(g_hTvEnabled.BoolValue)
+	if(g_hTvEnabled.BoolValue && g_bIsRecording)
 	{
 		ServerCommand("tv_stoprecord");
-		g_bIsRecording = false;
-		g_bRestartRecording = false;
-		g_iRestartRecording = -1;
+
+		GetPath(g_sPath, sizeof(g_sPath));
+		Call_StartForward(g_hFwd_OnStopRecord);
+		Call_PushString(g_sPath);
+		Call_PushString(g_sMap);
+		Call_PushString(g_sTime);
+		Call_PushCell(g_iRecordingDemoCount);
+		Call_PushString(g_sFileName);
+		Call_Finish();
+
+		CleanUp();
 	}
+}
+
+void CleanUp()
+{
+	g_bIsRecording = false;
+	g_bRestartRecording = false;
+	g_iRestartRecording = -1;
+	g_iRecordingFromTick = -1;
+	g_sTime = "\0";
+	g_sDemoName = "\0";
+	g_sFileName = "\0";
 }
 
 void InitDirectory(const char[] sDir)
 {
 	char sPieces[32][PLATFORM_MAX_PATH];
-	char sPath[PLATFORM_MAX_PATH];
 	int iNumPieces = ExplodeString(sDir, "/", sPieces, sizeof(sPieces), sizeof(sPieces[]));
 
 	for(int i = 0; i < iNumPieces; i++)
 	{
-		Format(sPath, sizeof(sPath), "%s/%s", sPath, sPieces[i]);
-		if(!DirExists(sPath))
+		Format(g_sPath, sizeof(g_sPath), "%s/%s", g_sPath, sPieces[i]);
+		if(!DirExists(g_sPath))
 		{
-			CreateDirectory(sPath, DIRECTORY_PERMISSIONS);
+			CreateDirectory(g_sPath, DIRECTORY_PERMISSIONS);
 		}
 	}
+}
+
+public int Native_GetDemoRecordCount(Handle hPlugin, int numParams)
+{
+	return g_iRecordingDemoCount;
+}
+
+public int Native_IsDemoRecording(Handle hPlugin, int numParams)
+{
+	return g_bIsRecording;
+}
+
+public int Native_GetDemoRecordingTick(Handle hPlugin, int numParams)
+{
+	if (!g_bIsRecording)
+	{
+		ThrowNativeError(SP_ERROR_NATIVE, "SourceTV is not recording!");
+		return -1;
+	}
+
+	return GetGameTickCount() - g_iRecordingFromTick;
+}
+
+public int Native_GetDemoRecordingName(Handle hPlugin, int numParams)
+{
+	if (!g_bIsRecording)
+	{
+		ThrowNativeError(SP_ERROR_NATIVE, "SourceTV is not recording!");
+		return -1;
+	}
+
+	int maxlen = GetNativeCell(2);
+	SetNativeString(1, g_sDemoName, maxlen);
+	return 1;
+}
+
+public int Native_GetDemoRecordingTime(Handle hPlugin, int numParams)
+{
+	if (!g_bIsRecording)
+	{
+		ThrowNativeError(SP_ERROR_NATIVE, "SourceTV is not recording!");
+		return -1;
+	}
+
+	return g_iTimestamp;
+}
+
+public int Native_GetDemoRecordingMap(Handle hPlugin, int numParams)
+{
+	if (!g_bIsRecording)
+	{
+		ThrowNativeError(SP_ERROR_NATIVE, "SourceTV is not recording!");
+		return -1;
+	}
+
+	int maxlen = GetNativeCell(2);
+	SetNativeString(1, g_sMap, maxlen);
+	return 1;
 }
