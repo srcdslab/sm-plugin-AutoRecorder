@@ -207,7 +207,12 @@ public Action Command_Record(int client, int args)
 		return Plugin_Handled;
 	}
 
-	StartRecord();
+	if (!StartRecord())
+	{
+		ReplyToCommand(client, "[SM] Cannot start recording.");
+		return Plugin_Handled;
+	}
+
 	g_bIsManual = true;
 
 	ReplyToCommand(client, "[SM] SourceTV is now recording...");
@@ -242,16 +247,6 @@ void CheckStatus()
 {
 	if(g_hAutoRecord.BoolValue && !g_bIsManual)
 	{
-		bool bSourceTV = false;
-		for (int i = 1; i <= MaxClients; i++)
-		{
-			if (IsClientConnected(i) && IsClientSourceTV(i))
-			{
-				bSourceTV = true;
-				break;
-			}
-		}
-
 		int iMinClients = g_hMinPlayersStart.IntValue;
 
 		int iTimeStart = g_hTimeStart.IntValue;
@@ -262,7 +257,7 @@ void CheckStatus()
 		FormatTime(sCurrentTime, sizeof(sCurrentTime), "%H", GetTime());
 		int iCurrentTime = StringToInt(sCurrentTime);
 
-		if(bSourceTV && GetPlayerCount() >= iMinClients && (iTimeStart < 0 || (iCurrentTime >= iTimeStart && (bReverseTimes || iCurrentTime < iTimeStop))))
+		if(GetPlayerCount() >= iMinClients && (iTimeStart < 0 || (iCurrentTime >= iTimeStart && (bReverseTimes || iCurrentTime < iTimeStop))))
 		{
 			StartRecord();
 		}
@@ -299,10 +294,23 @@ stock void GetPath(char[] buffer, int size)
 	g_hDemoPath.GetString(buffer, size);
 }
 
-void StartRecord()
+bool StartRecord()
 {
 	if(g_hTvEnabled.BoolValue && !g_bIsRecording)
 	{
+		bool bSourceTV = false;
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsClientConnected(i) && IsClientSourceTV(i))
+			{
+				bSourceTV = true;
+				break;
+			}
+		}
+
+		if (!bSourceTV)
+			return false;
+
 		GetPath(g_sPath, sizeof(g_sPath));
 
 		g_iTimestamp = GetTime();
@@ -326,7 +334,11 @@ void StartRecord()
 		Call_PushCell(g_iRecordingDemoCount);
 		Call_PushString(g_sFileName);
 		Call_Finish();
+
+		return true;
 	}
+
+	return false;
 }
 
 void StopRecord()
