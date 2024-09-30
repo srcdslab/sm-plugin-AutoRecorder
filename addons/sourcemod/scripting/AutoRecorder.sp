@@ -31,6 +31,9 @@
 * Sept 28, 2023 - v.1.4.0:
 *   [*] Add forwards and natives for API usage
 *   [*] Small code improvements
+* Sept 11, 2024 - v.1.4.1:
+*	[*] Make timer check every 5 seconds instead of 300
+*	[*] Add sm_autorecord_checkstatus to control whether to check status automatically
 * 
 */
 
@@ -44,7 +47,7 @@ public Plugin myinfo =
 	name = "Auto Recorder",
 	author = "Stevo.TVR, inGame, maxime1907, .Rushaway",
 	description = "Automates SourceTV recording based on player count and time of day.",
-	version = "1.4.0",
+	version = "1.4.1",
 	url = "http://www.theville.org"
 }
 
@@ -59,6 +62,7 @@ ConVar g_hTimeStart = null;
 ConVar g_hTimeStop = null;
 ConVar g_hFinishMap = null;
 ConVar g_hDemoPath = null;
+ConVar g_hCheckStatus = null;
 
 bool g_bRestartRecording = false;
 bool g_bIsRecording = false;
@@ -104,6 +108,7 @@ public void OnPluginStart()
 	g_hTimeStop = CreateConVar("sm_autorecord_timestop", "-1", "Hour in the day to stop recording (0-23, -1 disables)");
 	g_hFinishMap = CreateConVar("sm_autorecord_finishmap", "1", "If 1, continue recording until the map ends", _, true, 0.0, true, 1.0);
 	g_hDemoPath = CreateConVar("sm_autorecord_path", "demos", "Path to store recorded demos");
+	g_hCheckStatus = CreateConVar("sm_autorecord_checkstatus", "1", "Automatically check if all conditions are met to start recording", _, true, 0.0, true, 1.0);
 
 	AutoExecConfig(true);
 
@@ -126,7 +131,7 @@ public void OnPluginStart()
 	g_hTimeStop.AddChangeHook(OnConVarChanged);
 	g_hDemoPath.AddChangeHook(OnConVarChanged);
 
-	CreateTimer(300.0, Timer_CheckStatus, _, TIMER_REPEAT);
+	CreateTimer(5.0, Timer_CheckStatus, _, TIMER_REPEAT);
 
 	CleanUp();
 	StopRecord();
@@ -188,7 +193,9 @@ public void OnClientDisconnect_Post(int client)
 
 public Action Timer_CheckStatus(Handle timer)
 {
-	CheckStatus();
+	if (g_hCheckStatus.BoolValue)
+		CheckStatus();
+
 	return Plugin_Continue;
 }
 
@@ -200,7 +207,12 @@ public Action Command_Record(int client, int args)
 		return Plugin_Handled;
 	}
 
-	StartRecord();
+	if (!StartRecord())
+	{
+		ReplyToCommand(client, "[SM] Cannot start recording.");
+		return Plugin_Handled;
+	}
+
 	g_bIsManual = true;
 
 	ReplyToCommand(client, "[SM] SourceTV is now recording...");
@@ -282,10 +294,23 @@ stock void GetPath(char[] buffer, int size)
 	g_hDemoPath.GetString(buffer, size);
 }
 
-void StartRecord()
+bool StartRecord()
 {
 	if(g_hTvEnabled.BoolValue && !g_bIsRecording)
 	{
+		bool bSourceTV = false;
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsClientConnected(i) && IsClientSourceTV(i))
+			{
+				bSourceTV = true;
+				break;
+			}
+		}
+
+		if (!bSourceTV)
+			return false;
+
 		GetPath(g_sPath, sizeof(g_sPath));
 
 		g_iTimestamp = GetTime();
@@ -297,7 +322,7 @@ void StartRecord()
 		g_iRecordingFromTick = GetGameTickCount();
 		g_bIsRecording = true;
 		g_bRestartRecording = true;
-		g_iRestartRecording = GetTime() + 1800;
+		g_iRestartRecording = g_iTimestamp + 1800;
 		g_iRecordingDemoCount++;
 
 		LogMessage("Recording to \"%s/%s\"", g_sPath, g_sFileName);
@@ -309,7 +334,11 @@ void StartRecord()
 		Call_PushCell(g_iRecordingDemoCount);
 		Call_PushString(g_sFileName);
 		Call_Finish();
+
+		return true;
 	}
+
+	return false;
 }
 
 void StopRecord()
