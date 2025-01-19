@@ -34,6 +34,8 @@
 * Sept 11, 2024 - v.1.4.1:
 *	[*] Make timer check every 5 seconds instead of 300
 *	[*] Add sm_autorecord_checkstatus to control whether to check status automatically
+* Jan 19, 2025 - v.1.4.2:
+*	[*] Add forward to check if plugin is available
 * 
 */
 
@@ -47,9 +49,12 @@ public Plugin myinfo =
 	name = "Auto Recorder",
 	author = "Stevo.TVR, inGame, maxime1907, .Rushaway",
 	description = "Automates SourceTV recording based on player count and time of day.",
-	version = "1.4.1",
+	version = "1.4.2",
 	url = "http://www.theville.org"
 }
+
+GlobalForward g_hForward_StatusOK;
+GlobalForward g_hForward_StatusNotOK;
 
 Handle g_hFwd_OnStartRecord;
 Handle g_hFwd_OnStopRecord;
@@ -91,6 +96,9 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("AutoRecorder_GetDemoRecordingTick", Native_GetDemoRecordingTick);
 	CreateNative("AutoRecorder_GetDemoRecordingName", Native_GetDemoRecordingName);
 	CreateNative("AutoRecorder_GetDemoRecordingTime", Native_GetDemoRecordingTime);
+
+	g_hForward_StatusOK = CreateGlobalForward("AutoRecorder_OnPluginOK", ET_Ignore);
+	g_hForward_StatusNotOK = CreateGlobalForward("AutoRecorder_OnPluginNotOK", ET_Ignore);
 
 	g_hFwd_OnStartRecord = CreateGlobalForward("AutoRecorder_OnStartRecord", ET_Ignore, Param_String, Param_String, Param_String, Param_Cell, Param_String);
 	g_hFwd_OnStopRecord = CreateGlobalForward("AutoRecorder_OnStopRecord", ET_Ignore, Param_String, Param_String, Param_String, Param_Cell, Param_String);
@@ -136,6 +144,24 @@ public void OnPluginStart()
 	CleanUp();
 	StopRecord();
 	CheckStatus();
+}
+
+public void OnAllPluginsLoaded()
+{
+	SendForward_Available();
+}
+
+public void OnPluginPauseChange(bool pause)
+{
+	if (pause)
+		SendForward_NotAvailable();
+	else
+		SendForward_Available();
+}
+
+public void OnPluginEnd()
+{
+	SendForward_NotAvailable();
 }
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char [] newValue)
@@ -442,4 +468,16 @@ public int Native_GetDemoRecordingMap(Handle hPlugin, int numParams)
 	int maxlen = GetNativeCell(2);
 	SetNativeString(1, g_sMap, maxlen);
 	return 1;
+}
+
+stock void SendForward_Available()
+{
+	Call_StartForward(g_hForward_StatusOK);
+	Call_Finish();
+}
+
+stock void SendForward_NotAvailable()
+{
+	Call_StartForward(g_hForward_StatusNotOK);
+	Call_Finish();
 }
