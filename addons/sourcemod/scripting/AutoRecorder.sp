@@ -40,6 +40,7 @@
 */
 
 #include <sourcemod>
+#include <AutoRecorder>
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -49,7 +50,7 @@ public Plugin myinfo =
 	name = "Auto Recorder",
 	author = "Stevo.TVR, inGame, maxime1907, .Rushaway",
 	description = "Automates SourceTV recording based on player count and time of day.",
-	version = "1.4.2",
+	version = AutoRecorder_VERSION,
 	url = "http://www.theville.org"
 }
 
