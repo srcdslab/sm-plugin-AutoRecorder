@@ -4,10 +4,10 @@
 #define _autorecorder_included
 
 #define AutoRecorder_V_MAJOR   1
-#define AutoRecorder_V_MINOR   4
+#define AutoRecorder_V_MINOR   5
 #define AutoRecorder_V_PATCH   0
 
-#define AutoRecorder_VERSION   "1.4.0"
+#define AutoRecorder_VERSION   "1.5.0"
 
 /**
  * Called when AutoRecorder plugin becomes available
