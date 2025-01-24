@@ -9,6 +9,10 @@
 
 #define AutoRecorder_VERSION   "1.5.0"
 
+#if AutoRecorder_V_MAJOR > 1 || (AutoRecorder_V_MAJOR == 1 && AutoRecorder_V_MINOR >= 5)
+	#define AUTORECORDER_PLUGIN_STATUS_API
+#endif
+
 /**
  * Called when AutoRecorder plugin becomes available
  *
