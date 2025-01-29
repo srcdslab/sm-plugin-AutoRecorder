@@ -3,29 +3,11 @@
 #endif
 #define _autorecorder_included
 
-#define AutoRecorder_V_MAJOR   1
-#define AutoRecorder_V_MINOR   5
-#define AutoRecorder_V_PATCH   0
+#define AutoRecorder_V_MAJOR   "1"
+#define AutoRecorder_V_MINOR   "4"
+#define AutoRecorder_V_PATCH   "2"
 
-#define AutoRecorder_VERSION   "1.5.0"
-
-#if AutoRecorder_V_MAJOR > 1 || (AutoRecorder_V_MAJOR == 1 && AutoRecorder_V_MINOR >= 5)
-	#define AUTORECORDER_PLUGIN_STATUS_API
-#endif
-
-/**
- * Called when AutoRecorder plugin becomes available
- *
- * @noreturn
- */
-forward void AutoRecorder_OnPluginOK();
-
-/**
- * Called when AutoRecorder plugin becomes unavailable
- *
- * @noreturn
- */
-forward void AutoRecorder_OnPluginNotOK();
+#define AutoRecorder_VERSION   AutoRecorder_V_MAJOR..."."...AutoRecorder_V_MINOR..."."...AutoRecorder_V_PATCH
 
 /**
  * Returns whether the AutoRecorder is currently recording a demo.
