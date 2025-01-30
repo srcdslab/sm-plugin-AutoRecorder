@@ -34,10 +34,13 @@
 * Sept 11, 2024 - v.1.4.1:
 *	[*] Make timer check every 5 seconds instead of 300
 *	[*] Add sm_autorecord_checkstatus to control whether to check status automatically
+* Jan 29, 2025 - v.1.4.2:
+*	[*] Update include docs
 * 
 */
 
 #include <sourcemod>
+#include <AutoRecorder>
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -47,7 +50,7 @@ public Plugin myinfo =
 	name = "Auto Recorder",
 	author = "Stevo.TVR, inGame, maxime1907, .Rushaway",
 	description = "Automates SourceTV recording based on player count and time of day.",
-	version = "1.4.1",
+	version = AutoRecorder_VERSION,
 	url = "http://www.theville.org"
 }
 

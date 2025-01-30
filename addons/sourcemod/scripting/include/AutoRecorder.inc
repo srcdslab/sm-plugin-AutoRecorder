@@ -3,72 +3,82 @@
 #endif
 #define _autorecorder_included
 
+#define AutoRecorder_V_MAJOR   "1"
+#define AutoRecorder_V_MINOR   "4"
+#define AutoRecorder_V_PATCH   "2"
+
+#define AutoRecorder_VERSION   AutoRecorder_V_MAJOR..."."...AutoRecorder_V_MINOR..."."...AutoRecorder_V_PATCH
+
 /**
  * Returns whether the AutoRecorder is currently recording a demo.
  * 
- * @return      True if is recording. False otherwise
+ * @return          True if recording, false otherwise
  */
 native bool AutoRecorder_IsDemoRecording();
 
 /**
- * Get the actual demo record number.
+ * Gets the current demo record count for this map.
  * 
- * @noreturn
+ * @return          Number of demos recorded on current map
  */
 native int AutoRecorder_GetDemoRecordCount();
 
 /**
- * Get the acutal demo recording tick
+ * Gets the current demo recording tick.
  * 
- * @noreturn
+ * @return          Current recording tick, -1 if not recording
+ * @error           If not currently recording
  */
 native int AutoRecorder_GetDemoRecordingTick();
 
 /**
- * Get the Timestamp when demo started.
+ * Gets the timestamp when the current demo started recording.
  * 
- * @noreturn
+ * @return          Unix timestamp when recording started, -1 if not recording
+ * @error           If not currently recording
  */
-native int AutoRecorder_GetDemoRecordingTime()
+native int AutoRecorder_GetDemoRecordingTime();
 
 /**
- * Get the Mapname of the currently recorded demo.
+ * Gets the map name of the currently recorded demo.
  *
- * @param buffer	Buffer to store the mapname in.
- * @param maxlen	Maximal length of the buffer.
- * @noreturn
+ * @param buffer    Buffer to store the map name.
+ * @param maxlen    Maximum length of buffer.
+ * @return          1 on success, -1 if not recording.
+ * @error           If not currently recording.
  */
 native int AutoRecorder_GetDemoRecordingMap(char[] buffer, int maxlen);
 
 /**
- * Get the filename of the currently recorded demo.
+ * Gets the filename of the currently recorded demo.
  *
- * @param buffer	Buffer to store the filename in.
- * @param maxlen	Maximal length of the buffer.
- * @noreturn
+ * @param buffer    Buffer to store the filename.
+ * @param maxlen    Maximum length of buffer.
+ * @return          1 on success, -1 if not recording.
+ * @error           If not currently recording.
  */
 native int AutoRecorder_GetDemoRecordingName(char[] buffer, int maxlen);
 
 /**
- * Called when AutoRecord start recording.
+ * Called when AutoRecord starts recording.
  *
- * @param sPath     The path where the demo is stored.
- * @param sMap     	The Mapname related to the demo recording.
- * @param sTime     The Formated time when the demo started.
- * @param iCount    The actual demo record number.
- * @param sFileName	The file name of the demo.
+ * @param sPath      The path where the demo is stored
+ * @param sMap       The map name related to the demo recording
+ * @param sTime      The formatted time when the demo started
+ * @param iCount     The current demo record number
+ * @param sFileName  The file name of the demo
  * @noreturn
  */
 forward void AutoRecorder_OnStartRecord(char[] sPath, char[] sMap, char[] sTime, int iCount, char[]sFileName);
 
 /**
- * Called when AutoRecord stop recording.
+ * Called when AutoRecord stops recording.
  * 
- * @param sPath     The path where the demo is stored.
- * @param sMap     	The Mapname related to the demo recording.
- * @param sTime     The Formated time when the demo started.
- * @param iCount    The actual demo record number.
- * @param sFileName	The file name of the demo.
+ * @param sPath      The path where the demo is stored
+ * @param sMap       The map name related to the demo recording
+ * @param sTime      The formatted time when the demo started
+ * @param iCount     The current demo record number
+ * @param sFileName  The file name of the demo
  * @noreturn
  */
 forward void AutoRecorder_OnStopRecord(char[] sPath, char[] sMap, char[] sTime, int iCount, char[]sFileName);
@@ -77,13 +87,14 @@ public SharedPlugin __pl_autorecorder =
 {
 	name = "AutoRecorder",
 	file = "AutoRecorder.smx",
-	#if defined REQUIRE_PLUGIN
+#if defined REQUIRE_PLUGIN
 	required = 1
-	#else
+#else
 	required = 0
-	#endif
+#endif
 };
 
+#if !defined REQUIRE_PLUGIN
 public void __pl_autorecorder_SetNTVOptional()
 {
 	MarkNativeAsOptional("AutoRecorder_IsDemoRecording");
@@ -93,3 +104,4 @@ public void __pl_autorecorder_SetNTVOptional()
 	MarkNativeAsOptional("AutoRecorder_GetDemoRecordingMap");
 	MarkNativeAsOptional("AutoRecorder_GetDemoRecordingName");
 }
+#endif
