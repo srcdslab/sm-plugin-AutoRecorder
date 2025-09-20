@@ -1,12 +1,12 @@
 /*
-* 
+*
 * Auto Recorder
 * http://forums.alliedmods.net/showthread.php?t=92072
-* 
+*
 * Description:
 * Automates SourceTV recording based on player count
 * and time of day. Also allows admins to manually record.
-* 
+*
 * Changelog
 * May 09, 2009 - v.1.0.0:
 *   [*] Initial Release
@@ -36,7 +36,9 @@
 *	[*] Add sm_autorecord_checkstatus to control whether to check status automatically
 * Jan 29, 2025 - v.1.4.2:
 *	[*] Update include docs
-* 
+* Sep 20, 2025 - v.1.4.3:
+*	[*] Add ADMFLAG_RCON to sm_stoprecord command
+*
 */
 
 #include <sourcemod>
@@ -45,7 +47,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-public Plugin myinfo = 
+public Plugin myinfo =
 {
 	name = "Auto Recorder",
 	author = "Stevo.TVR, inGame, maxime1907, .Rushaway",
@@ -116,14 +118,14 @@ public void OnPluginStart()
 	AutoExecConfig(true);
 
 	RegAdminCmd("sm_record", Command_Record, ADMFLAG_ROOT, "Starts a SourceTV demo");
-	RegAdminCmd("sm_stoprecord", Command_StopRecord, ADMFLAG_ROOT, "Stops the current SourceTV demo");
+	RegAdminCmd("sm_stoprecord", Command_StopRecord, ADMFLAG_RCON, "Stops the current SourceTV demo");
 
 	HookEvent("round_start", OnRoundStart);
 
 	g_hTvEnabled = FindConVar("tv_enable");
 
 	g_hDemoPath.GetString(g_sPath, sizeof(g_sPath));
-	if(!DirExists(g_sPath))
+	if (!DirExists(g_sPath))
 	{
 		InitDirectory(g_sPath);
 	}
@@ -143,9 +145,9 @@ public void OnPluginStart()
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char [] newValue)
 {
-	if(convar == g_hDemoPath)
+	if (convar == g_hDemoPath)
 	{
-		if(!DirExists(newValue))
+		if (!DirExists(newValue))
 		{
 			InitDirectory(newValue);
 		}
@@ -158,7 +160,7 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char [] 
 
 public void OnRoundStart(Event hEvent, const char[] sEvent, bool bDontBroadcast)
 {
-	if(g_bRestartRecording && g_iRestartRecording <= GetTime())
+	if (g_bRestartRecording && g_iRestartRecording <= GetTime())
 	{
 		StopRecord();
 		CheckStatus();
@@ -177,7 +179,7 @@ public void OnMapStart()
 
 public void OnMapEnd()
 {
-	if(g_bIsRecording)
+	if (g_bIsRecording)
 	{
 		StopRecord();
 		CleanUp();
@@ -204,7 +206,7 @@ public Action Timer_CheckStatus(Handle timer)
 
 public Action Command_Record(int client, int args)
 {
-	if(g_bIsRecording)
+	if (g_bIsRecording)
 	{
 		ReplyToCommand(client, "[SM] SourceTV is already recording!");
 		return Plugin_Handled;
@@ -226,29 +228,41 @@ public Action Command_Record(int client, int args)
 
 public Action Command_StopRecord(int client, int args)
 {
-	if(!g_bIsRecording)
+	if (!g_bIsRecording)
 	{
 		ReplyToCommand(client, "[SM] SourceTV is not recording!");
 		return Plugin_Handled;
 	}
 
-	StopRecord();
-
-	if(g_bIsManual)
+	if (client > 0 && (GetUserFlagBits(client) & ADMFLAG_RCON))
 	{
-		g_bIsManual = false;
-		CheckStatus();
-	}
+		// Admin asked to stop at end of round and restart immediately
+		g_bRestartRecording = true;
+		g_iRestartRecording = GetTime();
 
-	ReplyToCommand(client, "[SM] Stopped recording.");
-	LogAction(-1, -1, "\"%L\" manually stopped recording demo on SourceTV.", client);
+		ReplyToCommand(client, "[SM] Recording will stop at the end of the round and restart immediately.");
+		LogAction(-1, -1, "\"%L\" scheduled recording stop at round end.", client);
+	}
+	else
+	{
+		StopRecord();
+
+		if (g_bIsManual)
+		{
+			g_bIsManual = false;
+			CheckStatus();
+		}
+
+		ReplyToCommand(client, "[SM] Stopped recording.");
+		LogAction(-1, -1, "\"%L\" manually stopped recording demo on SourceTV.", client);
+	}
 
 	return Plugin_Handled;
 }
 
 void CheckStatus()
 {
-	if(g_hAutoRecord.BoolValue && !g_bIsManual)
+	if (g_hAutoRecord.BoolValue && !g_bIsManual)
 	{
 		int iMinClients = g_hMinPlayersStart.IntValue;
 
@@ -260,11 +274,11 @@ void CheckStatus()
 		FormatTime(sCurrentTime, sizeof(sCurrentTime), "%H", GetTime());
 		int iCurrentTime = StringToInt(sCurrentTime);
 
-		if(GetPlayerCount() >= iMinClients && (iTimeStart < 0 || (iCurrentTime >= iTimeStart && (bReverseTimes || iCurrentTime < iTimeStop))))
+		if (GetPlayerCount() >= iMinClients && (iTimeStart < 0 || (iCurrentTime >= iTimeStart && (bReverseTimes || iCurrentTime < iTimeStop))))
 		{
 			StartRecord();
 		}
-		else if(g_bIsRecording && !g_hFinishMap.BoolValue && (iTimeStop < 0 || iCurrentTime >= iTimeStop))
+		else if (g_bIsRecording && !g_hFinishMap.BoolValue && (iTimeStop < 0 || iCurrentTime >= iTimeStop))
 		{
 			StopRecord();
 		}
@@ -276,15 +290,15 @@ int GetPlayerCount()
 	bool bIgnoreBots = g_hIgnoreBots.BoolValue;
 
 	int iNumPlayers = 0;
-	for(int i = 1; i <= MaxClients; i++)
+	for (int i = 1; i <= MaxClients; i++)
 	{
-		if(IsClientConnected(i) && (!bIgnoreBots || !IsFakeClient(i)))
+		if (IsClientConnected(i) && (!bIgnoreBots || !IsFakeClient(i)))
 		{
 			iNumPlayers++;
 		}
 	}
 
-	if(!bIgnoreBots)
+	if (!bIgnoreBots)
 	{
 		iNumPlayers--;
 	}
@@ -299,7 +313,7 @@ stock void GetPath(char[] buffer, int size)
 
 bool StartRecord()
 {
-	if(g_hTvEnabled.BoolValue && !g_bIsRecording)
+	if (g_hTvEnabled.BoolValue && !g_bIsRecording)
 	{
 		bool bSourceTV = false;
 		for (int i = 1; i <= MaxClients; i++)
@@ -346,7 +360,7 @@ bool StartRecord()
 
 void StopRecord()
 {
-	if(g_hTvEnabled.BoolValue && g_bIsRecording)
+	if (g_hTvEnabled.BoolValue && g_bIsRecording)
 	{
 		ServerCommand("tv_stoprecord");
 
@@ -379,10 +393,10 @@ void InitDirectory(const char[] sDir)
 	char sPieces[32][PLATFORM_MAX_PATH];
 	int iNumPieces = ExplodeString(sDir, "/", sPieces, sizeof(sPieces), sizeof(sPieces[]));
 
-	for(int i = 0; i < iNumPieces; i++)
+	for (int i = 0; i < iNumPieces; i++)
 	{
 		Format(g_sPath, sizeof(g_sPath), "%s/%s", g_sPath, sPieces[i]);
-		if(!DirExists(g_sPath))
+		if (!DirExists(g_sPath))
 		{
 			CreateDirectory(g_sPath, DIRECTORY_PERMISSIONS);
 		}
