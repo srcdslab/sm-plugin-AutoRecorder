@@ -234,9 +234,21 @@ public Action Command_StopRecord(int client, int args)
 		return Plugin_Handled;
 	}
 
-	if (client > 0 && (GetUserFlagBits(client) & ADMFLAG_RCON))
+	char sArg[2];
+	bool bImmediateStop = false;
+
+	if (args >= 1)
 	{
-		// Admin asked to stop at end of round and restart immediately
+		GetCmdArg(1, sArg, sizeof(sArg));
+		if (StringToInt(sArg) == 1)
+		{
+			bImmediateStop = true;
+		}
+	}
+
+	if (!bImmediateStop)
+	{
+		// Default behavior: stop at end of round and restart immediately
 		g_bRestartRecording = true;
 		g_iRestartRecording = GetTime();
 
