@@ -5,7 +5,7 @@
 
 #define AutoRecorder_V_MAJOR   "1"
 #define AutoRecorder_V_MINOR   "4"
-#define AutoRecorder_V_PATCH   "2"
+#define AutoRecorder_V_PATCH   "3"
 
 #define AutoRecorder_VERSION   AutoRecorder_V_MAJOR..."."...AutoRecorder_V_MINOR..."."...AutoRecorder_V_PATCH
 
