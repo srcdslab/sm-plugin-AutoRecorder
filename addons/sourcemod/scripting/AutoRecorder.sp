@@ -39,7 +39,7 @@
 * Sep 20, 2025 - v.1.4.3:
 *	[*] Add ADMFLAG_RCON to sm_stoprecord command
 * Aug 14, 2026 - v.1.4.4:
-*	[*] Fix silently error "couldn't open file for writing"
+*	[*] Fix silent "couldn't open file for writing" error
 *
 *
 */
@@ -127,11 +127,7 @@ public void OnPluginStart()
 
 	g_hTvEnabled = FindConVar("tv_enable");
 
-	g_hDemoPath.GetString(g_sPath, sizeof(g_sPath));
-	if (!DirExists(g_sPath))
-	{
-		InitDirectory(g_sPath);
-	}
+	InitDirectory();
 
 	g_hMinPlayersStart.AddChangeHook(OnConVarChanged);
 	g_hIgnoreBots.AddChangeHook(OnConVarChanged);
@@ -150,10 +146,7 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char [] 
 {
 	if (convar == g_hDemoPath)
 	{
-		if (!DirExists(newValue))
-		{
-			InitDirectory(newValue);
-		}
+		InitDirectory();
 	}
 	else
 	{
@@ -324,6 +317,16 @@ int GetPlayerCount()
 stock void GetPath(char[] buffer, int size)
 {
 	g_hDemoPath.GetString(buffer, size);
+	TrimTrailingSlash(buffer);
+}
+
+stock void TrimTrailingSlash(char[] sPath)
+{
+	int len = strlen(sPath);
+	if (len > 0 && sPath[len - 1] == '/')
+	{
+		sPath[len - 1] = '\0';
+	}
 }
 
 bool StartRecord()
@@ -403,15 +406,24 @@ void CleanUp()
 	g_sFileName = "\0";
 }
 
-void InitDirectory(const char[] sDir)
+void InitDirectory()
 {
+	char sDir[PLATFORM_MAX_PATH];
+	GetPath(sDir, sizeof(sDir));
+
 	char sPieces[32][PLATFORM_MAX_PATH];
 	int iNumPieces = ExplodeString(sDir, "/", sPieces, sizeof(sPieces), sizeof(sPieces[]));
 
 	char sPath[PLATFORM_MAX_PATH];
 	for (int i = 0; i < iNumPieces; i++)
 	{
-		if (i == 0)
+		if (sPieces[i][0] == '\0')
+		{
+			// Skip empty segments from a leading '/' or doubled '//' in sDir
+			continue;
+		}
+
+		if (sPath[0] == '\0')
 		{
 			Format(sPath, sizeof(sPath), "%s", sPieces[i]);
 		}
@@ -426,7 +438,7 @@ void InitDirectory(const char[] sDir)
 		}
 	}
 
-	strcopy(g_sPath, sizeof(g_sPath), sPath);
+	strcopy(g_sPath, sizeof(g_sPath), (sPath[0] != '\0') ? sPath : sDir);
 }
 
 public int Native_GetDemoRecordCount(Handle hPlugin, int numParams)
