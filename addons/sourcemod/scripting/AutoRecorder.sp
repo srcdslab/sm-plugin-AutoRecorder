@@ -38,6 +38,9 @@
 *	[*] Update include docs
 * Sep 20, 2025 - v.1.4.3:
 *	[*] Add ADMFLAG_RCON to sm_stoprecord command
+* Aug 14, 2026 - v.1.4.4:
+*	[*] Fix silently error "couldn't open file for writing"
+*
 *
 */
 
@@ -405,14 +408,25 @@ void InitDirectory(const char[] sDir)
 	char sPieces[32][PLATFORM_MAX_PATH];
 	int iNumPieces = ExplodeString(sDir, "/", sPieces, sizeof(sPieces), sizeof(sPieces[]));
 
+	char sPath[PLATFORM_MAX_PATH];
 	for (int i = 0; i < iNumPieces; i++)
 	{
-		Format(g_sPath, sizeof(g_sPath), "%s/%s", g_sPath, sPieces[i]);
-		if (!DirExists(g_sPath))
+		if (i == 0)
 		{
-			CreateDirectory(g_sPath, DIRECTORY_PERMISSIONS);
+			Format(sPath, sizeof(sPath), "%s", sPieces[i]);
+		}
+		else
+		{
+			Format(sPath, sizeof(sPath), "%s/%s", sPath, sPieces[i]);
+		}
+
+		if (!DirExists(sPath) && !CreateDirectory(sPath, DIRECTORY_PERMISSIONS))
+		{
+			LogError("Failed to create directory: %s", sPath);
 		}
 	}
+
+	strcopy(g_sPath, sizeof(g_sPath), sPath);
 }
 
 public int Native_GetDemoRecordCount(Handle hPlugin, int numParams)
