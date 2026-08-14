@@ -39,7 +39,7 @@
 * Sep 20, 2025 - v.1.4.3:
 *	[*] Add ADMFLAG_RCON to sm_stoprecord command
 * Aug 14, 2026 - v.1.4.4:
-*	[*] Fix silently error "couldn't open file for writing"
+*	[*] Fix silent "couldn't open file for writing" error
 *
 *
 */
