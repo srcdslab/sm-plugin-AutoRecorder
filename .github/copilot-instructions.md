@@ -16,9 +16,9 @@ This repository contains the **AutoRecorder** SourceMod plugin, which automates 
 ## Technical Environment
 
 - **Language**: SourcePawn (latest syntax)
-- **Platform**: SourceMod 1.11+ (configured for 1.11.0-git6934, but should target 1.12+ for new development)
-- **Build System**: SourceKnight 0.2
-- **Compiler**: SourcePawn compiler (spcomp) via SourceKnight
+- **Platform**: SourceMod 1.12+
+- **Build System**: Native GitHub Actions workflow (`rumblefrog/setup-sp`)
+- **Compiler**: SourcePawn compiler (spcomp), installed directly in CI
 - **CI/CD**: GitHub Actions with automated building and releases
 
 ## Project Structure
@@ -29,7 +29,6 @@ addons/sourcemod/
 │   ├── AutoRecorder.sp          # Main plugin source
 │   └── include/
 │       └── AutoRecorder.inc     # Public API definitions
-sourceknight.yaml                # Build configuration
 .github/
 ├── workflows/
 │   └── ci.yml                   # CI/CD pipeline
@@ -40,10 +39,10 @@ sourceknight.yaml                # Build configuration
 
 ### Building the Plugin
 
-1. **Prerequisites**: SourceKnight build tool (used in CI)
-2. **Build Command**: `sourceknight build` (via GitHub Actions)
+1. **Prerequisites**: SourcePawn compiler (`spcomp`), matching the SourceMod 1.12 branch (used in CI)
+2. **Build Command**: `spcomp -i include -o ../plugins/AutoRecorder.smx AutoRecorder.sp` (via GitHub Actions)
 3. **Output**: Compiled `.smx` files in `/addons/sourcemod/plugins`
-4. **Dependencies**: SourceMod 1.11+ headers and includes
+4. **Dependencies**: SourceMod 1.12+ headers and includes
 
 ### Local Development
 - Edit `.sp` files in `addons/sourcemod/scripting/`
@@ -246,7 +245,7 @@ if(g_hTvEnabled.BoolValue && !g_bIsRecording)
 
 ## Dependencies and Compatibility
 
-- **Minimum SourceMod**: 1.11+ (recommend updating to 1.12+ for new features)
+- **Minimum SourceMod**: 1.12+
 - **Required Extensions**: None beyond core SourceMod
 - **Game Compatibility**: Any Source engine game with SourceTV support
 - **Operating System**: Cross-platform (Linux, Windows)
@@ -263,7 +262,7 @@ if(g_hTvEnabled.BoolValue && !g_bIsRecording)
 ## Troubleshooting Common Issues
 
 ### Build Failures
-- Check SourceMod version compatibility in `sourceknight.yaml`
+- Check SourceMod version compatibility in `.github/workflows/ci.yml`
 - Verify syntax with pragma requirements
 - Review Include paths and dependencies
 
