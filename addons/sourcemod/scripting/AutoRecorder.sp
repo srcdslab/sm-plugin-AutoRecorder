@@ -59,8 +59,8 @@ public Plugin myinfo =
 	url = "http://www.theville.org"
 }
 
-Handle g_hFwd_OnStartRecord;
-Handle g_hFwd_OnStopRecord;
+GlobalForward g_hFwd_OnStartRecord;
+GlobalForward g_hFwd_OnStopRecord;
 
 ConVar g_hTvEnabled = null;
 ConVar g_hAutoRecord = null;
@@ -100,8 +100,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("AutoRecorder_GetDemoRecordingName", Native_GetDemoRecordingName);
 	CreateNative("AutoRecorder_GetDemoRecordingTime", Native_GetDemoRecordingTime);
 
-	g_hFwd_OnStartRecord = CreateGlobalForward("AutoRecorder_OnStartRecord", ET_Ignore, Param_String, Param_String, Param_String, Param_Cell, Param_String);
-	g_hFwd_OnStopRecord = CreateGlobalForward("AutoRecorder_OnStopRecord", ET_Ignore, Param_String, Param_String, Param_String, Param_Cell, Param_String);
+	g_hFwd_OnStartRecord = new GlobalForward("AutoRecorder_OnStartRecord", ET_Ignore, Param_String, Param_String, Param_String, Param_Cell, Param_String);
+	g_hFwd_OnStopRecord = new GlobalForward("AutoRecorder_OnStopRecord", ET_Ignore, Param_String, Param_String, Param_String, Param_Cell, Param_String);
 
 	RegPluginLibrary("AutoRecorder");
 	return APLRes_Success;
