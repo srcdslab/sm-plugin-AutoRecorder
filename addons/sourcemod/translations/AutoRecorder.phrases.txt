@@ -1,0 +1,63 @@
+"Phrases"
+{
+	"SourceTV Already Recording"
+	{
+		"en"		"SourceTV is already recording!"
+		"fr"		"SourceTV enregistre déjà !"
+		"ru"		"SourceTV уже ведёт запись!"
+		"es"		"¡SourceTV ya está grabando!"
+		"de"		"SourceTV nimmt bereits auf!"
+		"pt"		"O SourceTV já está gravando!"
+		"chi"		"SourceTV 已在录制！"
+	}
+	"SourceTV Start Failed"
+	{
+		"en"		"Cannot start recording."
+		"fr"		"Impossible de démarrer l'enregistrement."
+		"ru"		"Не удалось начать запись."
+		"es"		"No se puede iniciar la grabación."
+		"de"		"Die Aufnahme kann nicht gestartet werden."
+		"pt"		"Não foi possível iniciar a gravação."
+		"chi"		"无法开始录制。"
+	}
+	"SourceTV Recording Started"
+	{
+		"en"		"SourceTV is now recording..."
+		"fr"		"SourceTV enregistre maintenant..."
+		"ru"		"SourceTV начал запись..."
+		"es"		"SourceTV está grabando..."
+		"de"		"SourceTV nimmt jetzt auf..."
+		"pt"		"O SourceTV está gravando..."
+		"chi"		"SourceTV 正在录制……"
+	}
+	"SourceTV Not Recording"
+	{
+		"en"		"SourceTV is not recording!"
+		"fr"		"SourceTV n'enregistre pas !"
+		"ru"		"SourceTV не ведёт запись!"
+		"es"		"¡SourceTV no está grabando!"
+		"de"		"SourceTV nimmt nicht auf!"
+		"pt"		"O SourceTV não está gravando!"
+		"chi"		"SourceTV 未在录制！"
+	}
+	"SourceTV Stop Scheduled"
+	{
+		"en"		"Recording will stop at the end of the round and restart immediately."
+		"fr"		"L'enregistrement s'arrêtera à la fin du round et reprendra immédiatement."
+		"ru"		"Запись остановится в конце раунда и сразу начнётся заново."
+		"es"		"La grabación se detendrá al final de la ronda y se reiniciará inmediatamente."
+		"de"		"Die Aufnahme stoppt am Ende der Runde und startet sofort neu."
+		"pt"		"A gravação vai parar no fim do round e recomeçar imediatamente."
+		"chi"		"录制将在本回合结束时停止并立即重新开始。"
+	}
+	"SourceTV Recording Stopped"
+	{
+		"en"		"Stopped recording."
+		"fr"		"Enregistrement arrêté."
+		"ru"		"Запись остановлена."
+		"es"		"Grabación detenida."
+		"de"		"Aufnahme gestoppt."
+		"pt"		"Gravação interrompida."
+		"chi"		"已停止录制。"
+	}
+}
