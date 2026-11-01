@@ -109,6 +109,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
+	LoadTranslations("AutoRecorder.phrases");
+
 	g_hAutoRecord = CreateConVar("sm_autorecord_enable", "1", "Enable automatic recording", _, true, 0.0, true, 1.0);
 	g_hMinPlayersStart = CreateConVar("sm_autorecord_minplayers", "4", "Minimum players on server to start recording", _, true, 0.0);
 	g_hIgnoreBots = CreateConVar("sm_autorecord_ignorebots", "1", "Ignore bots in the player count", _, true, 0.0, true, 1.0);
@@ -204,19 +206,19 @@ public Action Command_Record(int client, int args)
 {
 	if (g_bIsRecording)
 	{
-		ReplyToCommand(client, "[SM] SourceTV is already recording!");
+		ReplyToCommand(client, "[SM] %t", "SourceTV Already Recording");
 		return Plugin_Handled;
 	}
 
 	if (!StartRecord())
 	{
-		ReplyToCommand(client, "[SM] Cannot start recording.");
+		ReplyToCommand(client, "[SM] %t", "SourceTV Start Failed");
 		return Plugin_Handled;
 	}
 
 	g_bIsManual = true;
 
-	ReplyToCommand(client, "[SM] SourceTV is now recording...");
+	ReplyToCommand(client, "[SM] %t", "SourceTV Recording Started");
 	LogAction(-1, -1, "\"%L\" manually started recording demo on SourceTV.", client);
 
 	return Plugin_Handled;
@@ -226,7 +228,7 @@ public Action Command_StopRecord(int client, int args)
 {
 	if (!g_bIsRecording)
 	{
-		ReplyToCommand(client, "[SM] SourceTV is not recording!");
+		ReplyToCommand(client, "[SM] %t", "SourceTV Not Recording");
 		return Plugin_Handled;
 	}
 
@@ -248,7 +250,7 @@ public Action Command_StopRecord(int client, int args)
 		g_bRestartRecording = true;
 		g_iRestartRecording = GetTime();
 
-		ReplyToCommand(client, "[SM] Recording will stop at the end of the round and restart immediately.");
+		ReplyToCommand(client, "[SM] %t", "SourceTV Stop Scheduled");
 		LogAction(-1, -1, "\"%L\" scheduled recording stop at round end.", client);
 	}
 	else
@@ -261,7 +263,7 @@ public Action Command_StopRecord(int client, int args)
 			CheckStatus();
 		}
 
-		ReplyToCommand(client, "[SM] Stopped recording.");
+		ReplyToCommand(client, "[SM] %t", "SourceTV Recording Stopped");
 		LogAction(-1, -1, "\"%L\" manually stopped recording demo on SourceTV.", client);
 	}
 
