@@ -9,6 +9,12 @@
 		"de"		"SourceTV nimmt bereits auf!"
 		"pt"		"O SourceTV já está gravando!"
 		"chi"		"SourceTV 已在录制！"
+		"pl"		"SourceTV już nagrywa!"
+		"tr"		"SourceTV zaten kayıt yapıyor!"
+		"it"		"SourceTV sta già registrando!"
+		"ua"		"SourceTV вже записує!"
+		"zho"		"SourceTV 已經在錄製了！"
+		"cze"		"SourceTV už nahrává!"
 	}
 	"SourceTV Start Failed"
 	{
@@ -19,6 +25,12 @@
 		"de"		"Die Aufnahme kann nicht gestartet werden."
 		"pt"		"Não foi possível iniciar a gravação."
 		"chi"		"无法开始录制。"
+		"pl"		"Nie można rozpocząć nagrywania."
+		"tr"		"Kayıt başlatılamıyor."
+		"it"		"Impossibile avviare la registrazione."
+		"ua"		"Не вдалося почати запис."
+		"zho"		"無法開始錄製。"
+		"cze"		"Nahrávání nelze spustit."
 	}
 	"SourceTV Recording Started"
 	{
@@ -29,6 +41,12 @@
 		"de"		"SourceTV nimmt jetzt auf..."
 		"pt"		"O SourceTV está gravando..."
 		"chi"		"SourceTV 正在录制……"
+		"pl"		"SourceTV rozpoczyna nagrywanie..."
+		"tr"		"SourceTV şimdi kayıt yapıyor..."
+		"it"		"SourceTV sta registrando..."
+		"ua"		"SourceTV почав запис..."
+		"zho"		"SourceTV 正在開始錄製……"
+		"cze"		"SourceTV nyní nahrává..."
 	}
 	"SourceTV Not Recording"
 	{
@@ -39,6 +57,12 @@
 		"de"		"SourceTV nimmt nicht auf!"
 		"pt"		"O SourceTV não está gravando!"
 		"chi"		"SourceTV 未在录制！"
+		"pl"		"SourceTV nie nagrywa!"
+		"tr"		"SourceTV kayıt yapmıyor!"
+		"it"		"SourceTV non sta registrando!"
+		"ua"		"SourceTV не записує!"
+		"zho"		"SourceTV 沒有在錄製！"
+		"cze"		"SourceTV nenahrává!"
 	}
 	"SourceTV Stop Scheduled"
 	{
@@ -49,6 +73,12 @@
 		"de"		"Die Aufnahme stoppt am Ende der Runde und startet sofort neu."
 		"pt"		"A gravação vai parar no fim do round e recomeçar imediatamente."
 		"chi"		"录制将在本回合结束时停止并立即重新开始。"
+		"pl"		"Nagrywanie zatrzyma się na koniec rundy i od razu wystartuje ponownie."
+		"tr"		"Kayıt tur sonunda duracak ve hemen yeniden başlayacak."
+		"it"		"La registrazione si fermerà a fine round e ripartirà subito."
+		"ua"		"Запис зупиниться наприкінці раунду й одразу перезапуститься."
+		"zho"		"錄製將在本回合結束時停止，並立即重新開始。"
+		"cze"		"Nahrávání se zastaví na konci kola a okamžitě znovu spustí."
 	}
 	"SourceTV Recording Stopped"
 	{
@@ -59,5 +89,11 @@
 		"de"		"Aufnahme gestoppt."
 		"pt"		"Gravação interrompida."
 		"chi"		"已停止录制。"
+		"pl"		"Zatrzymano nagrywanie."
+		"tr"		"Kayıt durduruldu."
+		"it"		"Registrazione interrotta."
+		"ua"		"Запис зупинено."
+		"zho"		"已停止錄製。"
+		"cze"		"Nahrávání zastaveno."
 	}
 }
